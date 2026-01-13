@@ -182,44 +182,49 @@ export default function TestPage() {
           })}
         </div>
 
-        {/* 하단: 1~12 버튼 및 페이지 정보 */}
+        {/* 하단: 페이지 번호 버튼 (1~12) 및 페이지 정보 */}
         <div className="mt-8">
-          {/* 1~12 버튼 - 한 줄로 고정 */}
+          {/* 페이지 번호 버튼 - 한 줄로 고정 */}
           <div className="flex justify-center gap-1.5 mb-4 overflow-x-auto pb-2">
-            {Array.from({ length: pageQuestions.length }, (_, i) => {
-              const questionIndex = pageStartIndex + i;
-              const isCurrentQuestion = questionIndex === currentIndex;
-              const question = questions[questionIndex];
-              const hasAnswer = answers[question.id];
+            {Array.from({ length: totalPages }, (_, i) => {
+              const pageNum = i + 1;
+              const pageStart = i * QUESTIONS_PER_PAGE;
+              const pageEnd = Math.min(pageStart + QUESTIONS_PER_PAGE, questions.length);
+              const isCurrentPage = i === currentPage;
+              
+              // 해당 페이지에 답변이 있는지 확인
+              const pageHasAnswers = questions
+                .slice(pageStart, pageEnd)
+                .some((q) => answers[q.id]);
 
               return (
                 <button
-                  key={questionIndex}
+                  key={i}
                   onClick={() => {
-                    setCurrentIndex(questionIndex);
+                    // 해당 페이지의 첫 번째 질문으로 이동
+                    const targetIndex = pageStart;
+                    setCurrentIndex(targetIndex);
                     const state: AssessmentState = {
                       answers,
-                      currentIndex: questionIndex,
+                      currentIndex: targetIndex,
                     };
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
                     
-                    // 해당 질문 카드로 스크롤
+                    // 페이지 상단으로 스크롤
                     setTimeout(() => {
-                      const questionElement = document.getElementById(`question-${question.id}`);
-                      if (questionElement) {
-                        questionElement.scrollIntoView({ behavior: "smooth", block: "center" });
-                      }
+                      window.scrollTo({ top: 0, behavior: "smooth" });
                     }, 100);
                   }}
                   className={`w-8 h-8 rounded-lg font-semibold text-xs transition-all duration-200 flex-shrink-0 ${
-                    isCurrentQuestion
+                    isCurrentPage
                       ? "bg-sky-500 text-white scale-110 shadow-lg"
-                      : hasAnswer
+                      : pageHasAnswers
                       ? "bg-sky-200 text-sky-700 border-2 border-sky-300"
                       : "bg-background border-2 border-border text-text-secondary hover:border-sky-300 hover:text-sky-500"
                   }`}
+                  title={`${pageStart + 1}~${pageEnd}번 질문`}
                 >
-                  {questionIndex + 1}
+                  {pageNum}
                 </button>
               );
             })}
